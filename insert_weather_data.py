@@ -4,6 +4,8 @@ import requests
 import time
 import json
 import datetime
+import pytz
+from pytz import timezone
 
 d = datetime.datetime
 database = r"C:\sqlite\db\weather.db"
@@ -119,17 +121,36 @@ class City:
                                  self.request['main']['temp'])
             create_project(conn, self.weather_data)
 
-austin = City("Austin", "Texas", central_time_adjustment)
-san_francisco = City("San Francisco", "California", pacific_time_adjustment)
-new_york = City("New York", "New York", eastern_time_adjustment)
+timezones = {
+    'central' : pytz.timezone('US/Central'),
+    'pacific' : pytz.timezone('US/Pacific'),
+    'eastern' : pytz.timezone('US/Eastern')
+}
 
-cities_list = [austin, san_francisco, new_york]
-    
-while True:
-    conn = create_connection(database)
-    for city in cities_list:
-        try:
-            city.add_data()
-        except Exception as e:
-            print('Error with adding data.')
-    time.sleep(300)
+with open('city_data.txt', 'r') as f:
+    city_data = f.read().splitlines()
+print(city_data)
+#print(timezones.get('central'))
+
+cities_list = []
+for line in city_data:
+    city_name, state_name, timezone_string = line.split(',')
+    print(city_name, state_name, timezone_string)
+    print(city_name, state_name, timezones.get(timezone_string))
+    #cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
+#print(d.now().astimezone(pytz.timezone('US/Central')).timestamp())
+#print(d.utcnow().timestamp() - d.now().astimezone(pytz.timezone('US/Eastern')).timestamp())
+print(d.timestamp(d.now(tz=pytz.timezone('US/Eastern'))) - d.timestamp(d.now(tz=pytz.utc)))
+
+def collect_data_every_five_minutes():
+    while True:
+        conn = create_connection(database)
+        for city in cities_list:
+            try:
+                city.add_data()
+            except Exception as e:
+                print('Error with adding data.')
+        time.sleep(300)
+
+#if __name__ == "__main__":
+    #collect_data_every_five_minutes()

@@ -1,3 +1,0 @@
-Austin,Texas,10800
-San Francisco,California,3600
-New York,New York,14400
