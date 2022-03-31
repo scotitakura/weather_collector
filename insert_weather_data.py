@@ -4,15 +4,9 @@ import requests
 import time
 import json
 import datetime
-import pytz
-from pytz import timezone
 
 d = datetime.datetime
 database = r"C:\sqlite\db\weather.db"
-
-central_time_adjustment = 10800
-pacific_time_adjustment = 3600
-eastern_time_adjustment = 14400
 
 def create_connection(db_file):
     """
@@ -119,32 +113,25 @@ class City:
                                  self.state_name,
                                  d.fromtimestamp(self.request['dt'] + self.time_adjustment),
                                  self.request['main']['temp'])
+            conn = create_connection(database)
             create_project(conn, self.weather_data)
 
 timezones = {
-    'central' : pytz.timezone('US/Central'),
-    'pacific' : pytz.timezone('US/Pacific'),
-    'eastern' : pytz.timezone('US/Eastern')
+    'central' : 10800,
+    'pacific' : 3600,
+    'eastern' : 14400
 }
 
 with open('city_data.txt', 'r') as f:
     city_data = f.read().splitlines()
-print(city_data)
-#print(timezones.get('central'))
-
+        
 cities_list = []
 for line in city_data:
     city_name, state_name, timezone_string = line.split(',')
-    print(city_name, state_name, timezone_string)
-    print(city_name, state_name, timezones.get(timezone_string))
-    #cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
-#print(d.now().astimezone(pytz.timezone('US/Central')).timestamp())
-#print(d.utcnow().timestamp() - d.now().astimezone(pytz.timezone('US/Eastern')).timestamp())
-print(d.timestamp(d.now(tz=pytz.timezone('US/Eastern'))) - d.timestamp(d.now(tz=pytz.utc)))
+    cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
 
 def collect_data_every_five_minutes():
-    while True:
-        conn = create_connection(database)
+    while True:        
         for city in cities_list:
             try:
                 city.add_data()
@@ -152,5 +139,5 @@ def collect_data_every_five_minutes():
                 print('Error with adding data.')
         time.sleep(300)
 
-#if __name__ == "__main__":
-    #collect_data_every_five_minutes()
+if __name__ == "__main__":
+    collect_data_every_five_minutes()
