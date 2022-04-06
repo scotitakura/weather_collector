@@ -4,9 +4,13 @@ import requests
 import time
 import json
 import datetime
+from time import perf_counter
+import logging
 
 d = datetime.datetime
 database = r"C:\sqlite\db\weather.db"
+file_logger = logging.getLogger(__name__)
+file_logger.setLevel(logging.INFO)
 
 def create_connection(db_file):
     """
@@ -130,14 +134,32 @@ for line in city_data:
     city_name, state_name, timezone_string = line.split(',')
     cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
 
+hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+file_handler = logging.FileHandler(hourly_file)
+file_logger.addHandler(file_handler)
+
 def collect_data_every_five_minutes():
-    while True:        
+    global hourly_file
+    while True:
+        
+        #if hourly_file != f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
+            #hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+        if hourly_file != f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
+            hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+            file_handler = logging.FileHandler(hourly_file)
+            file_logger.addHandler(file_handler)
+
         for city in cities_list:
             try:
+                start_time = perf_counter()
                 city.add_data()
+                end_time = perf_counter()
+                total_time = end_time - start_time
+                file_logger.info(f'City: {city.city_name}, State: {city.state_name}, Execution Time: {total_time}')
             except Exception as e:
                 print('Error with adding data.')
-        time.sleep(300)
+        
+        time.sleep(100)
 
 if __name__ == "__main__":
     collect_data_every_five_minutes()
