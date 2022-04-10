@@ -142,8 +142,6 @@ def collect_data_every_five_minutes():
     global hourly_file
     while True:
         
-        #if hourly_file != f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
-            #hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
         if hourly_file != f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
             hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
             file_handler = logging.FileHandler(hourly_file)
@@ -157,9 +155,9 @@ def collect_data_every_five_minutes():
                 total_time = end_time - start_time
                 file_logger.info(f'City: {city.city_name}, State: {city.state_name}, Execution Time: {total_time}')
             except Exception as e:
-                print('Error with adding data.')
+                file_logger.error(d.now(), e)
         
-        time.sleep(100)
+        time.sleep(300)
 
 if __name__ == "__main__":
     collect_data_every_five_minutes()
