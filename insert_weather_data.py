@@ -110,7 +110,7 @@ class City:
         except Exception as e:
             print('Error with the API request.')
         else:
-            with open('raw_weather.txt', 'a') as f:
+            with open('texts/raw_weather.txt', 'a') as f:
                 f.write(json.dumps(self.request))
 
             self.weather_data = (self.request['name'],
@@ -134,16 +134,21 @@ for line in city_data:
     city_name, state_name, timezone_string = line.split(',')
     cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
 
-hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+hourly_file = f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
 file_handler = logging.FileHandler(hourly_file)
 file_logger.addHandler(file_handler)
 
 def collect_data_every_five_minutes():
     global hourly_file
+
+    i = 0
+
     while True:
-        
-        if hourly_file != f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
-            hourly_file = f'cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+        print(i)
+        i += 1
+
+        if hourly_file != f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
+            hourly_file = f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
             file_handler = logging.FileHandler(hourly_file)
             file_logger.addHandler(file_handler)
 
@@ -160,4 +165,5 @@ def collect_data_every_five_minutes():
         time.sleep(300)
 
 if __name__ == "__main__":
+    print("starting data collection...")
     collect_data_every_five_minutes()
