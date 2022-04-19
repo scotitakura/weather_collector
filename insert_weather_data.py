@@ -6,6 +6,7 @@ import json
 import datetime
 from time import perf_counter
 import logging
+import os
 
 d = datetime.datetime
 database = r"C:\sqlite\db\weather.db"
@@ -55,8 +56,9 @@ def create_project(conn, project):
           '''
     cur = conn.cursor()
     cur.execute(sql, project)
+    rowid = cur.lastrowid
     conn.commit()
-    return cur.lastrowid
+    return rowid
 
 class City:
     '''
@@ -118,7 +120,8 @@ class City:
                                  d.fromtimestamp(self.request['dt'] + self.time_adjustment),
                                  self.request['main']['temp'])
             conn = create_connection(database)
-            create_project(conn, self.weather_data)
+            rowid = create_project(conn, self.weather_data)
+            self.rowid = rowid
 
 timezones = {
     'central' : 10800,
@@ -134,21 +137,28 @@ for line in city_data:
     city_name, state_name, timezone_string = line.split(',')
     cities_list.append(City(city_name, state_name, timezones.get(timezone_string)))
 
-hourly_file = f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+today = f'{d.now().month}_{d.now().day}'
+daily_folder = f'./logs/{today}'
+hourly_file = f'{daily_folder}/cities_{today}_{d.now().hour}.log'
+
 file_handler = logging.FileHandler(hourly_file)
 file_logger.addHandler(file_handler)
 
 def collect_data_every_five_minutes():
-    global hourly_file
-
+    global today, daily_folder, hourly_file
     i = 0
 
     while True:
         print(i)
         i += 1
 
-        if hourly_file != f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log':
-            hourly_file = f'logs/cities_{d.now().month}_{d.now().day}_{d.now().hour}.log'
+        if daily_folder != f'./logs/{today}':
+            daily_folder = f'./logs/{today}'
+            if not os.path.exists(daily_folder):
+                os.makedirs(daily_folder)
+                
+        if hourly_file != f'{daily_folder}/cities_{today}_{d.now().hour}.log':
+            hourly_file = f'{daily_folder}/cities_{today}_{d.now().hour}.log'
             file_handler = logging.FileHandler(hourly_file)
             file_logger.addHandler(file_handler)
 
@@ -158,10 +168,10 @@ def collect_data_every_five_minutes():
                 city.add_data()
                 end_time = perf_counter()
                 total_time = end_time - start_time
-                file_logger.info(f'City: {city.city_name}, State: {city.state_name}, Execution Time: {total_time}')
+                file_logger.info(f'Id: {city.rowid}, City: {city.city_name}, State: {city.state_name}, Execution Time: {total_time}')
             except Exception as e:
                 file_logger.error(d.now(), e)
-        
+
         time.sleep(300)
 
 if __name__ == "__main__":
