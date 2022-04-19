@@ -34,14 +34,18 @@ def update_project(conn, project):
     conn.commit()
     return cur.lastrowid
 
-for file in os.listdir(f'logs/{today}/'):
-    with open(hourly_file, 'r') as f:
-        log_data = f.read().splitlines()
+def write_logs_to_db():
+    for file in os.listdir(f'logs/{today}/'):
+        with open(hourly_file, 'r') as f:
+            log_data = f.read().splitlines()
 
-    for line in log_data:
-        rowid = line.split(': ')[1].split(',')[0]
-        log_runtime = line.split('Execution Time: ')[1]
-        update_data = (log_runtime, rowid)
+        for line in log_data:
+            rowid = line.split(': ')[1].split(',')[0]
+            log_runtime = line.split('Execution Time: ')[1]
+            update_data = (log_runtime, rowid)
+            
+            conn = create_connection(database)
+            update_project(conn, update_data)
         
-        conn = create_connection(database)
-        update_project(conn, update_data)
+if __name__ == "__main__":
+    write_logs_to_db()
