@@ -141,6 +141,9 @@ today = f'{d.now().month}_{d.now().day}'
 daily_folder = f'./logs/{today}'
 hourly_file = f'{daily_folder}/cities_{today}_{d.now().hour}.log'
 
+if not os.path.exists(daily_folder):
+    os.makedirs(daily_folder)
+
 file_handler = logging.FileHandler(hourly_file)
 file_logger.addHandler(file_handler)
 
